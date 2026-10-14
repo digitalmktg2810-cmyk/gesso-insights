@@ -7,7 +7,7 @@ describe('Regras do painel', () => {
   it('formata reais com vírgula', () => expect(currency(87.5).replace(/\s/g, ' ')).toBe('R$ 87,50'));
   it('lê CSV brasileiro com valores decimais e campanha entre aspas', () => {
     const rows = parseCSV('data;origem;gasto;cliques;conversas;campanha\n14/10/2026;meta;5,80;24;4;"Gesso; WhatsApp"\n2026-10-14;google;3,60;14;3;Pesquisa');
-    expect(rows[0].campanha).toBe('Gesso; WhatsApp');
+    expect(rows[0]?.campanha).toBe('Gesso; WhatsApp');
     expect(sumRows(rows)).toEqual({ gasto: 9.4, cliques: 38, conversas: 7, custo: 9.4 / 7 });
   });
   it('calcula semana de segunda a domingo e exclui dias futuros', () => {

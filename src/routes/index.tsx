@@ -1,13 +1,13 @@
-import { createFileRoute, useNavigate, useRouter } from '@tanstack/react-router';
+import { createFileRoute, useNavigate, useRouter, type ErrorComponentProps } from '@tanstack/react-router';
 import { useQueryErrorResetBoundary, useSuspenseQuery } from '@tanstack/react-query';
-import { ArrowUpRight, CalendarDays, ChartNoAxesCombined, CircleDollarSign, Info, Megaphone, MessageCircle, MousePointer2, RefreshCw, Wallet } from 'lucide-react';
+import { CalendarDays, ChartNoAxesCombined, Info, Megaphone, MessageCircle, MousePointer2, RefreshCw, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { adsQueryOptions } from '@/lib/ads/data';
 import { campaignWeek, currency, dateKey, integer, shiftDay, sumRows, WEEKLY_TARGET, weekRows, weekStart, type AdRow } from '@/lib/ads/metrics';
 
 type View = 'hoje' | 'semana' | 'anuncios';
 export const Route = createFileRoute('/')({
-  validateSearch: (search: Record<string, unknown>): { aba: View } => ({ aba: search.aba === 'semana' || search.aba === 'anuncios' ? search.aba : 'hoje' }),
+  validateSearch: (search: Record<string, unknown>): { aba: View } => ({ aba: search['aba'] === 'semana' || search['aba'] === 'anuncios' ? search['aba'] : 'hoje' }),
   loader: async ({ context }) => { await context.queryClient.ensureQueryData(adsQueryOptions); },
   head: () => ({ meta: [
     { title: 'JM Gesso · Anúncios' },
@@ -23,10 +23,10 @@ export const Route = createFileRoute('/')({
   errorComponent: DashboardError,
 });
 
-function DashboardError({ error }: { error: Error }) {
+function DashboardError({ error }: ErrorComponentProps) {
   const router = useRouter();
   const { reset } = useQueryErrorResetBoundary();
-  return <div className="error-screen"><img src="/icons/jm-icon.svg" alt="JM Gesso" className="brand-icon" /><h1 className="mt-6">Os números não carregaram</h1><p>{error.message}</p><Button onClick={() => { reset(); void router.invalidate(); }}><RefreshCw /> Tentar novamente</Button></div>;
+  return <div className="error-screen"><img src="/icons/jm-icon.svg" alt="JM Gesso" className="brand-icon" /><h1 className="mt-6">Os números não carregaram</h1><p>{error instanceof Error ? error.message : 'Verifique a conexão e tente novamente.'}</p><Button onClick={() => { reset(); void router.invalidate(); }}><RefreshCw /> Tentar novamente</Button></div>;
 }
 
 function Platform({ origin, rows }: { origin: 'meta' | 'google'; rows: AdRow[] }) {

@@ -20,14 +20,14 @@ export function weekStart(key: string) {
 }
 export function weekRows(rows: AdRow[], today: string) {
   const start = weekStart(today);
-  return rows.filter(row => row.data >= start && row.data <= today);
+  return rows.filter(row => row['data'] >= start && row['data'] <= today);
 }
 export function sumRows(rows: AdRow[]): Totals {
-  const sums = rows.reduce((acc, row) => ({ gasto: acc.gasto + row.gasto, cliques: acc.cliques + row.cliques, conversas: acc.conversas + row.conversas }), { gasto: 0, cliques: 0, conversas: 0 });
+  const sums = rows.reduce((acc, row) => ({ gasto: acc.gasto + row['gasto'], cliques: acc.cliques + row['cliques'], conversas: acc.conversas + row['conversas'] }), { gasto: 0, cliques: 0, conversas: 0 });
   return { ...sums, gasto: Math.round(sums.gasto * 100) / 100, custo: sums.conversas ? sums.gasto / sums.conversas : null };
 }
 export function campaignWeek(rows: AdRow[], today: string) {
-  const first = rows.map(row => row.data).filter(day => day <= today).sort()[0];
+  const first = rows.map(row => row['data']).filter(day => day <= today).sort()[0];
   if (!first) return 1;
   return Math.min(8, Math.max(1, Math.floor((Date.parse(`${weekStart(today)}T12:00:00Z`) - Date.parse(`${weekStart(first)}T12:00:00Z`)) / 604800000) + 1));
 }
@@ -48,13 +48,13 @@ export function parseCSV(csv: string): AdRow[] {
   if (!required.every(field => parsed.meta.fields?.includes(field))) throw new Error('A planilha precisa das colunas data, origem, gasto, cliques, conversas e campanha.');
   if (parsed.errors.length) throw new Error('Não foi possível ler o CSV. Confira o formato da planilha.');
   return parsed.data.map((row, index) => {
-    const data = normalizeDate(row.data ?? '');
-    const origem = row.origem?.toLowerCase();
-    const gasto = number(row.gasto ?? '');
-    const cliques = number(row.cliques ?? '');
-    const conversas = number(row.conversas ?? '');
-    if (!data || (origem !== 'meta' && origem !== 'google') || [gasto, cliques, conversas].some(n => !Number.isFinite(n) || n < 0) || !Number.isInteger(cliques) || !Number.isInteger(conversas) || !row.gasto || !row.cliques || !row.conversas) throw new Error(`Confira os dados da linha ${index + 2} da planilha.`);
-    return { data, origem, gasto, cliques, conversas, campanha: row.campanha || 'Sem nome' };
+    const data = normalizeDate(row['data'] ?? '');
+    const origem = row['origem']?.toLowerCase();
+    const gasto = number(row['gasto'] ?? '');
+    const cliques = number(row['cliques'] ?? '');
+    const conversas = number(row['conversas'] ?? '');
+    if (!data || (origem !== 'meta' && origem !== 'google') || [gasto, cliques, conversas].some(n => !Number.isFinite(n) || n < 0) || !Number.isInteger(cliques) || !Number.isInteger(conversas) || !row['gasto'] || !row['cliques'] || !row['conversas']) throw new Error(`Confira os dados da linha ${index + 2} da planilha.`);
+    return { data, origem, gasto, cliques, conversas, campanha: row['campanha'] || 'Sem nome' };
   });
 }
 export function makeExample(today: string): AdRow[] {

@@ -4,7 +4,7 @@ import { dateKey, makeExample, parseCSV, REFRESH_INTERVAL } from './metrics';
 export const adsQueryOptions = queryOptions({
   queryKey: ['ads-csv'],
   queryFn: async ({ signal }) => {
-    const url = import.meta.env.VITE_DATA_CSV_URL?.trim();
+    const url = import.meta.env['VITE_DATA_CSV_URL']?.trim();
     const now = new Date();
     if (!url) return { rows: makeExample(dateKey(now)), example: true, updatedAt: now.toISOString() };
     const response = await fetch(url, { signal, cache: 'no-store' });
