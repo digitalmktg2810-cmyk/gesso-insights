@@ -1,6 +1,7 @@
 import Papa from 'papaparse';
 
 export const WEEKLY_TARGET = 125;
+export const CAMPAIGN_START = '2026-10-15';
 export const REFRESH_INTERVAL = 5 * 60 * 1000;
 export type AdRow = { data: string; origem: 'meta' | 'google'; gasto: number; cliques: number; conversas: number; campanha: string };
 export type Totals = { gasto: number; cliques: number; conversas: number; custo: number | null };
@@ -14,9 +15,13 @@ export function shiftDay(key: string, days: number) {
   date.setUTCDate(date.getUTCDate() + days);
   return date.toISOString().slice(0, 10);
 }
+export function dayDiff(from: string, to: string) {
+  return Math.round((Date.parse(`${to}T12:00:00Z`) - Date.parse(`${from}T12:00:00Z`)) / 86400000);
+}
+// A semana da campanha começa na quinta-feira (15/10/2026) e termina na quarta.
 export function weekStart(key: string) {
-  const day = new Date(`${key}T12:00:00Z`).getUTCDay();
-  return shiftDay(key, -((day + 6) % 7));
+  const diff = dayDiff(CAMPAIGN_START, key);
+  return shiftDay(key, -(((diff % 7) + 7) % 7));
 }
 export function weekRows(rows: AdRow[], today: string) {
   const start = weekStart(today);
@@ -26,10 +31,8 @@ export function sumRows(rows: AdRow[]): Totals {
   const sums = rows.reduce((acc, row) => ({ gasto: acc.gasto + row['gasto'], cliques: acc.cliques + row['cliques'], conversas: acc.conversas + row['conversas'] }), { gasto: 0, cliques: 0, conversas: 0 });
   return { ...sums, gasto: Math.round(sums.gasto * 100) / 100, custo: sums.conversas ? sums.gasto / sums.conversas : null };
 }
-export function campaignWeek(rows: AdRow[], today: string) {
-  const first = rows.map(row => row['data']).filter(day => day <= today).sort()[0];
-  if (!first) return 1;
-  return Math.min(8, Math.max(1, Math.floor((Date.parse(`${weekStart(today)}T12:00:00Z`) - Date.parse(`${weekStart(first)}T12:00:00Z`)) / 604800000) + 1));
+export function campaignWeek(today: string) {
+  return Math.min(8, Math.max(1, Math.floor(dayDiff(CAMPAIGN_START, today) / 7) + 1));
 }
 function normalizeDate(value: string) {
   const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
@@ -60,12 +63,14 @@ export function parseCSV(csv: string): AdRow[] {
 export function makeExample(today: string): AdRow[] {
   const start = weekStart(today);
   const rows: AdRow[] = [];
-  const days = Math.round((Date.parse(`${today}T12:00:00Z`) - Date.parse(`${start}T12:00:00Z`)) / 86400000);
+  const days = dayDiff(start, today);
   for (let i = 0; i <= days; i++) {
     const current = i === days;
-    const total = current ? 9.4 : Math.floor(7810 / Math.max(days, 1)) / 100 + (i === 0 ? (7810 % Math.max(days, 1)) / 100 : 0);
-    const meta = current ? 5.8 : Math.round(total * 0.65 * 100) / 100;
-    rows.push({ data: shiftDay(start, i), origem: 'meta', gasto: meta, cliques: current ? 24 : 78, conversas: current ? 4 : 11, campanha: 'Gesso e drywall · WhatsApp' }, { data: shiftDay(start, i), origem: 'google', gasto: Math.round((total - meta) * 100) / 100, cliques: current ? 14 : 42, conversas: current ? 3 : 6, campanha: 'Quem procura, encontra · Pesquisa' });
+    const day = shiftDay(start, i);
+    rows.push(
+      { data: day, origem: 'meta', gasto: current ? 6.25 : 12.5, cliques: current ? 14 : 26 + (i % 3) * 4, conversas: current ? 1 : 1 + (i % 2), campanha: 'JM Gesso - WhatsApp' },
+      { data: day, origem: 'google', gasto: current ? 2.65 : 5.35, cliques: current ? 3 : 6 + (i % 3), conversas: current ? 0 : i % 2, campanha: 'Gesso e Drywall · Pesquisa' },
+    );
   }
   return rows;
 }

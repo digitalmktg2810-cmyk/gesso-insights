@@ -26,7 +26,7 @@ export const Route = createFileRoute('/')({
 function DashboardError({ error }: ErrorComponentProps) {
   const router = useRouter();
   const { reset } = useQueryErrorResetBoundary();
-  return <div className="error-screen"><img src="/icons/jm-icon.svg" alt="JM Gesso" className="brand-icon" /><h1 className="mt-6">Os números não carregaram</h1><p>{error instanceof Error ? error.message : 'Verifique a conexão e tente novamente.'}</p><Button onClick={() => { reset(); void router.invalidate(); }}><RefreshCw /> Tentar novamente</Button></div>;
+  return <div className="error-screen"><img src="/icons/jm-192.png" alt="JM Gesso" className="brand-icon" /><h1 className="mt-6">Os números não carregaram</h1><p>{error instanceof Error ? error.message : 'Verifique a conexão e tente novamente.'}</p><Button onClick={() => { reset(); void router.invalidate(); }}><RefreshCw /> Tentar novamente</Button></div>;
 }
 
 function Platform({ origin, rows }: { origin: 'meta' | 'google'; rows: AdRow[] }) {
@@ -57,8 +57,8 @@ function Dashboard() {
   });
   return <>
     <header className="app-header"><div className="header-inner">
-      <div className="brand"><img className="brand-icon" src="/icons/jm-icon.svg" alt="Logo provisório JM Gesso" /><div><div className="brand-name">JM GESSO<span className="sr-only"> · Anúncios</span></div><div className="brand-subtitle">Painel de anúncios</div></div></div>
-      <div className="header-detail"><div className="week-label"><span className="live-dot" />Semana {campaignWeek(data.rows, today)} de 8</div><div className="platforms">Instagram, Facebook e Google</div></div>
+      <div className="brand"><img className="brand-icon" src="/icons/jm-192.png" alt="Logo JM Gesso" /><div><div className="brand-name">JM GESSO<span className="sr-only"> · Anúncios</span></div><div className="brand-subtitle">Painel de anúncios</div></div></div>
+      <div className="header-detail"><div className="week-label"><span className="live-dot" />Semana {campaignWeek(today)} de 8</div><div className="platforms">Instagram, Facebook e Google</div></div>
     </div></header>
     <main className="dashboard">
       <div className="page-heading"><div><div className="eyebrow">Seu negócio em movimento</div><h1>{aba === 'hoje' ? 'Resultados de hoje' : aba === 'semana' ? 'Nesta semana' : 'Seus anúncios'}</h1></div><div className="date-label"><CalendarDays size={14} /><span>{date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', timeZone: 'UTC' }).replace('.', '')}</span></div></div>
