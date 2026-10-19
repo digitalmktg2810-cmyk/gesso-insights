@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CAMPAIGN_START, campaignWeek, currency, makeExample, parseCSV, REFRESH_INTERVAL, sumRows, WEEKLY_TARGET, weekRows, weekStart } from './metrics';
+import { CAMPAIGN_START, campaignWeek, currency, makeExample, parseCSV, parseSheet, planWeek, plural, previousWeekRows, REFRESH_INTERVAL, sumRows, WEEKLY_TARGET, weekRows, weekStart } from './metrics';
 
 describe('Regras do painel', () => {
   it('fixa a meta semanal em R$ 125,00', () => expect(WEEKLY_TARGET).toBe(125));
@@ -27,11 +27,47 @@ describe('Regras do painel', () => {
     expect(totals.custo).toBeLessThan(25);
   });
   it('não divide por zero sem conversas', () => expect(sumRows([]).custo).toBeNull());
-  it('rejeita datas e contagens inválidas', () => expect(() => parseCSV('data,origem,gasto,cliques,conversas,campanha\n2026-02-31,meta,5,2,1,A')).toThrow());
+  it('ignora linhas inválidas sem derrubar o painel', () => {
+    const sheet = parseSheet('data,origem,gasto,cliques,conversas,campanha\n2026-02-31,meta,5,2,1,A\n2026-10-16,tiktok,1,1,1,B\n2026-10-16,meta,abc,1,1,C\n2026-10-16,meta,14.33,13,5,OK');
+    expect(sheet.rows).toHaveLength(1);
+    expect(sheet.skipped).toEqual([2, 3, 4]);
+  });
+  it('aceita variações comuns da planilha manual', () => {
+    const rows = parseCSV('data,origem,gasto,cliques,conversas,campanha\n5/10/2026,Meta Ads,"1.234,56",,-,A\n2026-10-16 00:00:00,Instagram,R$ 2,"",0,B\n16/10/2026,Google Ads,"1,234.50",3,1,C\n17/10/2026,google,4.11,2,0,');
+    expect(rows.map(r => [r.data, r.origem, r.gasto, r.cliques, r.conversas])).toEqual([
+      ['2026-10-05', 'meta', 1234.56, 0, 0],
+      ['2026-10-16', 'meta', 2, 0, 0],
+      ['2026-10-16', 'google', 1234.5, 3, 1],
+      ['2026-10-17', 'google', 4.11, 2, 0],
+    ]);
+    expect(rows[3]?.campanha).toBe('Sem nome');
+  });
+  it('conta uma vez só linhas exatamente iguais e mantém as diferentes', () => {
+    const rows = parseCSV('data,origem,gasto,cliques,conversas,campanha\n2026-10-16,meta,14.33,13,5,A\n2026-10-16,meta,14.33,13,5,A\n2026-10-16,meta,5,1,1,A\n2026-10-16,google,3,1,0,\n2026-10-16,google,4,1,0,');
+    expect(sumRows(rows).gasto).toBe(26.33);
+  });
+  it('entende milhar com ponto e recusa contagem quebrada', () => {
+    const sheet = parseSheet('data,origem,gasto,cliques,conversas,campanha\n2026-10-16,meta,1.234,1.234,0,A\n2026-10-16,meta,14,5,1,B\n2026-10-16,meta,"14,5",2.5,1,C');
+    expect(sheet.rows.map(r => [r.gasto, r.cliques])).toEqual([[1234, 1234], [14, 5]]);
+    expect(sheet.skipped).toEqual([4]);
+  });
+  it('numera certo a linha ignorada mesmo com linhas vazias no meio', () => {
+    const sheet = parseSheet('data,origem,gasto,cliques,conversas,campanha\n2026-10-16,meta,1,1,1,A\n\n,,,,,\n2026-10-16,tiktok,1,1,1,B');
+    expect(sheet.skipped).toEqual([5]);
+  });
+  it('compara com os mesmos dias da semana anterior', () => {
+    const rows = parseCSV('data,origem,gasto,cliques,conversas,campanha\n2026-10-15,meta,10,1,1,A\n2026-10-17,meta,5,1,1,A\n2026-10-19,meta,7,1,1,A\n2026-10-22,meta,3,1,1,A');
+    expect(sumRows(previousWeekRows(rows, '2026-10-24')).gasto).toBe(15);
+  });
+  it('escreve singular e plural', () => {
+    expect(plural(1, 'conversa', 'conversas')).toBe('1 conversa');
+    expect(plural(3, 'conversa', 'conversas')).toBe('3 conversas');
+  });
   it('conta semanas desde 15/10/2026 com limite de oito', () => {
     expect(campaignWeek('2026-10-15')).toBe(1);
     expect(campaignWeek('2026-10-21')).toBe(1);
     expect(campaignWeek('2026-10-22')).toBe(2);
     expect(campaignWeek('2027-10-21')).toBe(8);
+    expect(planWeek('2026-12-10')).toBe(9);
   });
 });

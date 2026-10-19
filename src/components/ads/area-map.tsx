@@ -38,7 +38,7 @@ export function AreaMap() {
     loadLeaflet()
       .then((L) => {
         if (cancelled || !ref.current) return;
-        map = L.map(ref.current, { scrollWheelZoom: false, attributionControl: true });
+        map = L.map(ref.current, { scrollWheelZoom: false, attributionControl: true, dragging: !L.Browser.mobile, tap: false });
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
           maxZoom: 18,
           attribution: "© OpenStreetMap",
@@ -86,7 +86,7 @@ export function AreaMap() {
   }, []);
 
   return (
-    <section className="metric-card mt-4" aria-label="Onde os anúncios aparecem">
+    <section className="metric-card map-card" aria-label="Onde os anúncios aparecem">
       <h2 className="list-heading">Onde seus anúncios aparecem</h2>
       <div className="area-body">
         {failed ? (
