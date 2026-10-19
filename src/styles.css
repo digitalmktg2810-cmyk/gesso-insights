@@ -188,3 +188,15 @@
   .day-row { padding: 17px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+.area-body { padding: 16px 23px 20px; }
+.area-map { height: 260px; border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--border); z-index: 0; position: relative; }
+.area-legend { display: grid; gap: 12px; margin-top: 14px; }
+@media (min-width: 640px) { .area-legend { grid-template-columns: 1fr 1fr; } .area-map { height: 340px; } }
+.area-title { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; }
+.area-swatch { width: 12px; height: 12px; border-radius: 999px; display: inline-block; }
+.area-swatch.meta { background: #2d4fd6; opacity: .8; }
+.area-swatch.google { background: #0f7f86; }
+.city-list { list-style: none; margin: 6px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted-foreground); }
+.city-list li { display: inline-flex; align-items: center; gap: 4px; }
+.city-label { font: 600 11px var(--font-sans); padding: 2px 6px; }

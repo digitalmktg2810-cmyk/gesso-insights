@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, useRouter, type ErrorComponentProps } fro
 import { useQueryErrorResetBoundary, useSuspenseQuery } from '@tanstack/react-query';
 import { CalendarDays, ChartNoAxesCombined, Info, Megaphone, MessageCircle, MousePointer2, RefreshCw, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { AreaMap } from '@/components/ads/area-map';
 import { adsQueryOptions } from '@/lib/ads/data';
 import { campaignWeek, currency, dateKey, integer, shiftDay, sumRows, WEEKLY_TARGET, weekRows, weekStart, type AdRow } from '@/lib/ads/metrics';
 
@@ -83,6 +84,7 @@ function Dashboard() {
           })}</section>}
         </>}
         {aba === 'anuncios' && <section className="metric-card mt-4"><h2 className="list-heading">Campanhas desta semana <span className="text-muted-foreground">({campaigns.length})</span></h2>{campaigns.length ? campaigns.map(campaign => <article className="day-row" key={campaign.key}><div><div className="campaign-origin">{campaign.origin === 'meta' ? 'Instagram e Facebook' : 'Google'}</div><h3 className="day-name">{campaign.name}</h3><p className="day-details">{integer(campaign.cliques)} cliques · {integer(campaign.conversas)} conversas</p></div><div className="day-amount">{currency(campaign.gasto)}</div></article>) : <p className="empty-state">Nenhuma campanha nesta semana.</p>}</section>}
+        {aba === 'anuncios' && <AreaMap />}
       </div>
       <footer className="update-footer"><span className="live-dot" /><span>Atualizado às {new Date(data.updatedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' })}</span><Button variant="ghost" size="icon" className={`refresh-button ${isFetching ? 'refreshing' : ''}`} title="Atualizar números" aria-label="Atualizar números" disabled={isFetching} onClick={() => void refetch()}><RefreshCw /></Button></footer>
     </main>
