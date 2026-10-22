@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CAMPAIGN_START, campaignWeek, currency, makeExample, parseCSV, parseSheet, planWeek, plural, previousWeekRows, REFRESH_INTERVAL, sumRows, WEEKLY_TARGET, weekRows, weekStart } from './metrics';
+import { latestDay, weekSummaries, CAMPAIGN_START, campaignWeek, currency, makeExample, parseCSV, parseSheet, planWeek, plural, previousWeekRows, REFRESH_INTERVAL, sumRows, WEEKLY_TARGET, weekRows, weekStart } from './metrics';
 
 describe('Regras do painel', () => {
   it('fixa a meta semanal em R$ 125,00', () => expect(WEEKLY_TARGET).toBe(125));
@@ -42,9 +42,17 @@ describe('Regras do painel', () => {
     ]);
     expect(rows[3]?.campanha).toBe('Sem nome');
   });
-  it('conta uma vez só linhas exatamente iguais e mantém as diferentes', () => {
-    const rows = parseCSV('data,origem,gasto,cliques,conversas,campanha\n2026-10-16,meta,14.33,13,5,A\n2026-10-16,meta,14.33,13,5,A\n2026-10-16,meta,5,1,1,A\n2026-10-16,google,3,1,0,\n2026-10-16,google,4,1,0,');
-    expect(sumRows(rows).gasto).toBe(26.33);
+  it('vale a última linha para a mesma data, origem e campanha', () => {
+    const rows = parseCSV('data,origem,gasto,cliques,conversas,campanha\n2026-10-16,meta,4.10,3,1,A\n2026-10-16,meta,14.33,13,5,A\n2026-10-16,meta,5,1,1,B\n2026-10-16,google,3,1,0,G');
+    expect(sumRows(rows).gasto).toBe(22.33);
+    expect(rows.find(r => r.campanha === 'A')?.conversas).toBe(5);
+  });
+  it('resume as semanas do plano e o último dia com dados', () => {
+    const rows = parseCSV('data,origem,gasto,cliques,conversas,campanha\n2026-10-15,meta,10,1,1,A\n2026-10-21,google,5,1,0,G\n2026-10-22,meta,3,1,1,A');
+    const weeks = weekSummaries(rows, '2026-10-22');
+    expect(weeks.map(w => [w.n, w.totals.gasto, w.current])).toEqual([[1, 15, false], [2, 3, true]]);
+    expect(weeks[0]?.google.gasto).toBe(5);
+    expect(latestDay(rows, '2026-10-21')).toBe('2026-10-21');
   });
   it('entende milhar com ponto e recusa contagem quebrada', () => {
     const sheet = parseSheet('data,origem,gasto,cliques,conversas,campanha\n2026-10-16,meta,1.234,1.234,0,A\n2026-10-16,meta,14,5,1,B\n2026-10-16,meta,"14,5",2.5,1,C');

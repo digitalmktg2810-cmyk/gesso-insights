@@ -24,8 +24,12 @@ describe('Fonte pública do painel', () => {
     expect(result.example).toBe(false);
     expect(result.rows[0]?.gasto).toBe(9.4);
     fetchMock.mockRejectedValueOnce(new Error('Falha de conexão'));
+    const offline = await client.fetchQuery({ ...options, staleTime: 0 });
+    expect(offline.stale).toBe(true);
+    expect(offline.rows[0]?.gasto).toBe(9.4);
+    window.localStorage.clear();
+    fetchMock.mockRejectedValueOnce(new Error('Falha de conexão'));
     await expect(client.fetchQuery(options)).rejects.toThrow('Falha de conexão');
-    expect(client.getQueryData(adsQueryOptions.queryKey)).toEqual(result);
     client.clear();
   });
 });

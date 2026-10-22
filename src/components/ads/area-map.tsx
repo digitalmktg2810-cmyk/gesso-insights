@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { MapPin } from "lucide-react";
-import { GOOGLE_CITIES, META_AREA } from "@/lib/ads/areas";
+import { GOOGLE_CITIES, META_AREAS, STORE } from "@/lib/ads/areas";
 
 const LEAFLET = "https://unpkg.com/leaflet@1.9.4/dist/leaflet";
 const META_COLOR = "#2d4fd6";
@@ -43,12 +43,17 @@ export function AreaMap() {
           maxZoom: 18,
           attribution: "© OpenStreetMap",
         }).addTo(map);
-        L.circle([META_AREA.center.lat, META_AREA.center.lng], {
-          radius: META_AREA.radiusKm * 1000,
-          color: META_COLOR,
-          weight: 2,
-          fillOpacity: 0.12,
-        }).addTo(map);
+        META_AREAS.forEach((area) => {
+          const main = area.focus === "principal";
+          L.circle([area.city.lat, area.city.lng], {
+            radius: area.radiusKm * 1000,
+            color: META_COLOR,
+            weight: main ? 2 : 1.5,
+            dashArray: main ? undefined : "5 5",
+            fillOpacity: main ? 0.18 : 0.05,
+          }).addTo(map);
+        });
+        L.marker([STORE.lat, STORE.lng], { title: "Loja" }).addTo(map);
         GOOGLE_CITIES.forEach((city) => {
           L.circleMarker([city.lat, city.lng], {
             radius: 7,
@@ -65,13 +70,15 @@ export function AreaMap() {
               className: "city-label",
             });
         });
-        const { lat, lng } = META_AREA.center;
-        const dLat = META_AREA.radiusKm / 111;
-        const dLng = META_AREA.radiusKm / (111 * Math.cos((lat * Math.PI) / 180));
+        const lats = META_AREAS.flatMap((a) => [a.city.lat - a.radiusKm / 111, a.city.lat + a.radiusKm / 111]);
+        const lngs = META_AREAS.flatMap((a) => {
+          const d = a.radiusKm / (111 * Math.cos((a.city.lat * Math.PI) / 180));
+          return [a.city.lng - d, a.city.lng + d];
+        });
         map.fitBounds(
           [
-            [lat - dLat, lng - dLng],
-            [lat + dLat, lng + dLng],
+            [Math.min(...lats), Math.min(...lngs)],
+            [Math.max(...lats), Math.max(...lngs)],
           ],
           { padding: [8, 8] },
         );
@@ -96,7 +103,7 @@ export function AreaMap() {
             ref={ref}
             className="area-map"
             role="img"
-            aria-label={`Raio de ${META_AREA.radiusKm} km em volta de ${META_AREA.center.name} e as cidades do Google`}
+            aria-label="Áreas dos anúncios: Leme e Porto Ferreira em foco, Pirassununga reduzida"
           />
         )}
         <div className="area-legend">
@@ -105,9 +112,14 @@ export function AreaMap() {
               <span className="area-swatch meta" />
               Instagram e Facebook
             </div>
-            <p className="day-details">
-              Raio de {META_AREA.radiusKm} km em volta de {META_AREA.center.name}
-            </p>
+            <ul className="city-list">
+              {META_AREAS.map((a) => (
+                <li key={a.city.name}>
+                  <MapPin size={14} />
+                  {a.city.name} ({a.radiusKm} km{a.focus === "reduzido" ? ", verba menor" : ""})
+                </li>
+              ))}
+            </ul>
           </div>
           <div className="area-group">
             <div className="area-title">

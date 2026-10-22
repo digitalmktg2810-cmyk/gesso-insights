@@ -45,6 +45,23 @@ export function planRows(rows: AdRow[], today: string) {
   const end = shiftDay(CAMPAIGN_START, PLAN_WEEKS * 7 - 1);
   return rows.filter(row => row.data >= CAMPAIGN_START && row.data <= today && row.data <= end);
 }
+/** Último dia (até hoje) que tem algum dado, em toda a planilha. */
+export function latestDay(rows: AdRow[], today: string) {
+  return rows.reduce<string | null>((last, row) => (row.data <= today && (last === null || row.data > last) ? row.data : last), null);
+}
+export type WeekSummary = { n: number; start: string; end: string; totals: Totals; meta: Totals; google: Totals; days: number; current: boolean };
+/** Resumo de cada semana do plano (quinta a quarta), da primeira até a semana de hoje. Semanas depois do plano continuam numeradas. */
+export function weekSummaries(rows: AdRow[], today: string): WeekSummary[] {
+  const last = planWeek(today);
+  const out: WeekSummary[] = [];
+  for (let n = 1; n <= last; n++) {
+    const start = shiftDay(CAMPAIGN_START, (n - 1) * 7);
+    const end = shiftDay(start, 6);
+    const inWeek = rows.filter(row => row.data >= start && row.data <= end && row.data <= today);
+    out.push({ n, start, end, totals: sumRows(inWeek), meta: sumRows(inWeek.filter(r => r.origem === 'meta')), google: sumRows(inWeek.filter(r => r.origem === 'google')), days: new Set(inWeek.map(r => r.data)).size, current: today >= start && today <= end });
+  }
+  return out;
+}
 /** Último dia da semana atual que já tem dados (ou null). */
 export function lastDataDay(rows: AdRow[], today: string) {
   return weekRows(rows, today).reduce<string | null>((last, row) => (last === null || row.data > last ? row.data : last), null);
@@ -89,7 +106,7 @@ function origin(value: string): AdRow['origem'] | null {
 }
 export type ParsedSheet = { rows: AdRow[]; skipped: number[] };
 /** Lê a planilha. Linhas com problema são ignoradas (e listadas em `skipped`, pelo número da linha) em vez de derrubar o painel.
- *  Só linhas exatamente iguais (todos os campos) contam uma vez, para não somar um export colado duas vezes. */
+ *  Mesma data + origem + campanha repetida: vale a última linha (ex.: lançamento das 22h corrige o das 13h). */
 export function parseSheet(csv: string): ParsedSheet {
   const parsed = Papa.parse<Record<string, string>>(csv, { header: true, skipEmptyLines: false, transformHeader: header => header.replace(/^\uFEFF/, '').trim().toLowerCase(), transform: value => value.trim() });
   if (parsed.meta.fields?.includes('campanhas') && !parsed.meta.fields.includes('campanha')) parsed.data.forEach(row => { row['campanha'] = row['campanhas'] ?? ''; });
@@ -98,8 +115,7 @@ export function parseSheet(csv: string): ParsedSheet {
   if (!required.every(field => fields.includes(field))) throw new Error('A planilha precisa das colunas data, origem, gasto, cliques, conversas e campanha.');
   const badRows = new Set(parsed.errors.map(error => error.row).filter((row): row is number => typeof row === 'number'));
   const skipped: number[] = [];
-  const seen = new Set<string>();
-  const rows: AdRow[] = [];
+  const byKey = new Map<string, AdRow>();
   parsed.data.forEach((row, index) => {
     const line = index + 2;
     if (Object.values(row).every(value => !value)) return;
@@ -113,12 +129,11 @@ export function parseSheet(csv: string): ParsedSheet {
       return;
     }
     const campanha = row['campanha'] || 'Sem nome';
-    const key = [data, origem, gasto, cliques, conversas, campanha].join('|');
-    if (seen.has(key)) return;
-    seen.add(key);
-    rows.push({ data, origem, gasto, cliques, conversas, campanha });
+    const key = [data, origem, campanha].join('|');
+    byKey.delete(key);
+    byKey.set(key, { data, origem, gasto, cliques, conversas, campanha });
   });
-  return { rows, skipped };
+  return { rows: [...byKey.values()], skipped };
 }
 export function parseCSV(csv: string): AdRow[] {
   return parseSheet(csv).rows;
