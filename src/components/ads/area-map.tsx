@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { MapPin } from "lucide-react";
-import { GOOGLE_CITIES, META_AREAS, STORE } from "@/lib/ads/areas";
+import { CITY_DRAW_KM, GOOGLE_CITIES, META_AREAS, STORE } from "@/lib/ads/areas";
 
 const LEAFLET = "https://unpkg.com/leaflet@1.9.4/dist/leaflet";
 const META_COLOR = "#2d4fd6";
@@ -46,7 +46,7 @@ export function AreaMap() {
         META_AREAS.forEach((area) => {
           const main = area.focus === "principal";
           L.circle([area.city.lat, area.city.lng], {
-            radius: area.radiusKm * 1000,
+            radius: (area.radiusKm || CITY_DRAW_KM) * 1000,
             color: META_COLOR,
             weight: main ? 2 : 1.5,
             dashArray: main ? undefined : "5 5",
@@ -70,9 +70,10 @@ export function AreaMap() {
               className: "city-label",
             });
         });
-        const lats = META_AREAS.flatMap((a) => [a.city.lat - a.radiusKm / 111, a.city.lat + a.radiusKm / 111]);
+        const r = (a: (typeof META_AREAS)[number]) => a.radiusKm || CITY_DRAW_KM;
+        const lats = META_AREAS.flatMap((a) => [a.city.lat - r(a) / 111, a.city.lat + r(a) / 111]);
         const lngs = META_AREAS.flatMap((a) => {
-          const d = a.radiusKm / (111 * Math.cos((a.city.lat * Math.PI) / 180));
+          const d = r(a) / (111 * Math.cos((a.city.lat * Math.PI) / 180));
           return [a.city.lng - d, a.city.lng + d];
         });
         map.fitBounds(
@@ -116,7 +117,7 @@ export function AreaMap() {
               {META_AREAS.map((a) => (
                 <li key={a.city.name}>
                   <MapPin size={14} />
-                  {a.city.name} ({a.radiusKm} km{a.focus === "reduzido" ? ", verba menor" : ""})
+                  {a.city.name} ({a.radiusKm ? `${a.radiusKm} km` : "cidade"}{a.focus === "reduzido" ? ", verba menor" : ""})
                 </li>
               ))}
             </ul>
