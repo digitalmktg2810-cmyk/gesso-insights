@@ -261,3 +261,21 @@ body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; height: 
   .view-historico .plan-card { align-self: stretch; }
 }
 @media (max-width: 480px) { .week-row { padding: 15px 17px; } .week-stats.big dd { font-size: 18px; } }
+
+/* Resumo simples: hoje e semana */
+.simple-card { padding: 22px 24px; }
+.simple-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.simple-head h2 { font-size: 20px; font-weight: 700; margin: 0; }
+.simple-head span { font-size: 14px; color: var(--muted-foreground); }
+.simple-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 18px 0 0; }
+.simple-stats.two { grid-template-columns: repeat(2, 1fr); }
+.simple-stats div { margin: 0; }
+.simple-stats dt { font-size: 13px; color: var(--muted-foreground); }
+.simple-stats dd { margin: 4px 0 0; font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.simple-stats dd.g { color: var(--success); }
+.simple-note { font-size: 13px; color: var(--muted-foreground); margin-top: 14px; }
+.simple-budget { display: flex; align-items: baseline; gap: 8px; margin-top: 14px; }
+.simple-budget strong { font-size: 34px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.simple-budget span { font-size: 14px; color: var(--muted-foreground); }
+.view-hoje .simple-card + .simple-card { margin-top: 16px; }
+@media (max-width: 480px) { .simple-card { padding: 20px 18px; } .simple-stats dd { font-size: 22px; } .simple-budget strong { font-size: 30px; } }

@@ -92,9 +92,8 @@ function Dashboard() {
   const hasWeek = weekly.length > 0;
   const week = sumRows(weekly);
   const latest = latestDay(data.rows, today);
-  const dayKey = weekly.some(r => r.data === today) ? today : latest;
-  const dayRows = dayKey ? data.rows.filter(r => r.data === dayKey) : [];
-  const day = sumRows(dayRows);
+  const todayRows = data.rows.filter(r => r.data === today);
+  const todayT = sumRows(todayRows);
   const weeks = weekSummaries(data.rows, today);
   const prevWeek = weeks.length > 1 ? weeks[weeks.length - 2] : undefined;
   const progress = Math.round(week.gasto / WEEKLY_TARGET * 100);
@@ -116,34 +115,27 @@ function Dashboard() {
       <div className="header-detail"><div className="week-label"><span className="live-dot" />{nowWeek > PLAN_WEEKS ? 'Plano de 8 semanas concluído' : `Semana ${campaignWeek(today)} de ${PLAN_WEEKS}`}</div><div className="platforms">Instagram, Facebook e Google</div></div>
     </div></header>
     <main className="dashboard">
-      <div className="page-heading"><div><div className="eyebrow">{aba === 'historico' ? 'Desde 15 de outubro' : `Semana ${nowWeek} · ${range(weekStart(today), shiftDay(weekStart(today), 6))}`}</div><h1>{title}</h1></div><div className="date-label"><CalendarDays size={14} /><span>{shortDate(today)}</span></div></div>
+      <div className="page-heading"><div><h1>{title}</h1></div></div>
       {data.example && <div className="example-badge"><Info /><span>EXEMPLO · números ilustrativos</span></div>}
       {data.stale && <p role="status" className="alert-message">Sem conexão agora. Estes são os últimos números salvos neste celular.</p>}
       {isRefetchError && !data.stale && <p role="alert" className="alert-message">Não foi possível atualizar. Os últimos números carregados continuam aqui.</p>}
       {data.skipped.length > 0 && <p role="status" className="alert-message">{data.skipped.length === 1 ? `A linha ${data.skipped[0]} da planilha não pôde ser lida e ficou de fora.` : `As linhas ${data.skipped.join(', ')} da planilha não puderam ser lidas e ficaram de fora.`} Os demais números estão certos.</p>}
       <div className={`view-content view-${aba}`} key={aba}>
         {aba === 'hoje' && <>
-          {hasWeek ? <section className="metric-card spend-card" aria-label="Investimento da semana">
-            <div className="spend-top"><h2 className="metric-label">Investido nesta semana</h2><div className="metric-icon"><Wallet /></div></div>
-            <div className="amount-line"><strong className="amount">{currency(week.gasto)}</strong><span className="amount-target">de {currency(WEEKLY_TARGET)}</span></div>
+          <section className="metric-card simple-card span-2" aria-label="Hoje">
+            <div className="simple-head"><h2>Hoje</h2><span>{shortDate(today)}</span></div>
+            <dl className="simple-stats"><div><dt>Investido</dt><dd>{todayRows.length ? currency(todayT.gasto) : '—'}</dd></div><div><dt>Conversas</dt><dd className="g">{todayRows.length ? integer(todayT.conversas) : '—'}</dd></div><div><dt>Por conversa</dt><dd>{todayRows.length ? costText(todayT) : '—'}</dd></div></dl>
+            {!todayRows.length && <p className="simple-note">Números de hoje entram às 13h e às 22h.</p>}
+          </section>
+          <section className="metric-card simple-card span-2" aria-label="Semana">
+            <div className="simple-head"><h2>Semana {nowWeek}</h2><span>{range(weekStart(today), shiftDay(weekStart(today), 6))}</span></div>
+            <div className="simple-budget"><strong>{currency(week.gasto)}</strong><span>de {currency(WEEKLY_TARGET)}</span></div>
             <progress className="progress-track" value={Math.min(week.gasto, WEEKLY_TARGET)} max={WEEKLY_TARGET} aria-label={`${progress}% do orçamento semanal`} />
-            <div className="spend-bottom"><p className="today-spend">{integer(week.conversas)} conversas · {integer(week.cliques)} cliques</p><p>{progress}% do orçamento</p></div>
-          </section> : <section className="metric-card spend-card new-week span-2" aria-label="Nova semana">
-            <div className="spend-top"><h2 className="metric-label">Semana {nowWeek} começou {weekStart(today) === today ? 'hoje' : `em ${shortDate(weekStart(today))}`}</h2><div className="metric-icon"><Wallet /></div></div>
-            <p className="new-week-text">Orçamento da semana: <b>{currency(WEEKLY_TARGET)}</b>. Os primeiros números entram às 13:00.</p>
-            {prevWeek && prevWeek.days > 0 && <div className="prev-week"><div className="eyebrow">Semana {prevWeek.n} fechou · {range(prevWeek.start, prevWeek.end)}</div>
-              <dl className="week-stats big"><div><dt>Investido</dt><dd>{currency(prevWeek.totals.gasto)}</dd></div><div><dt>Conversas</dt><dd>{integer(prevWeek.totals.conversas)}</dd></div><div><dt>Por conversa</dt><dd>{costText(prevWeek.totals)}</dd></div></dl></div>}
-          </section>}
-          {hasWeek && <div className="kpi-grid"><section className="metric-card kpi"><div className="kpi-header"><h2 className="metric-label">Cliques</h2><MousePointer2 /></div><div className="kpi-value">{integer(week.cliques)}</div><p className="kpi-caption">nesta semana</p></section>
-            <section className="metric-card kpi kpi-whatsapp"><div className="kpi-header"><h2 className="metric-label">Conversas no WhatsApp</h2><MessageCircle /></div><div className="kpi-value">{integer(week.conversas)}</div><p className="kpi-caption">nesta semana · {costText(week)} cada</p></section></div>}
-          {dayKey ? <section className="metric-card cost-card span-2"><div className="cost-top"><div><h2 className="metric-label">{dayKey === today ? 'Números do dia' : 'Último dia com números'}</h2><div className="day-title">{dayLabel(dayKey, today)}</div></div><div className="cost-symbol"><MessageCircle /></div></div>
-            <dl className="week-stats big day-stats"><div><dt>Investido</dt><dd>{currency(day.gasto)}</dd></div><div><dt>Conversas</dt><dd>{integer(day.conversas)}</dd></div><div><dt>Por conversa</dt><dd>{costText(day)}</dd></div></dl>
-            {dayKey !== today && <p className="kpi-caption">Hoje: {WAITING} (lançamento às 13:00 e às 22:00)</p>}
-            <div className="section-divider" /><h2 className="breakdown-heading">De onde vêm os resultados</h2><div className="platform-grid"><Platform origin="meta" rows={dayRows} /><Platform origin="google" rows={dayRows} /></div></section>
-            : <section className="metric-card span-2"><p className="empty-state">Ainda não há números lançados.</p></section>}
-          {canCompare && upTo && <Comparison current={sumRows(weekly.filter(r => r.data <= upTo))} previous={sumRows(previousWeekRows(data.rows, upTo))} upTo={upTo} />}
+            <dl className="simple-stats two"><div><dt>Conversas</dt><dd className="g">{integer(week.conversas)}</dd></div><div><dt>Por conversa</dt><dd>{costText(week)}</dd></div></dl>
+          </section>
         </>}
         {aba === 'historico' && <>
+          {canCompare && upTo && <Comparison current={sumRows(weekly.filter(r => r.data <= upTo))} previous={sumRows(previousWeekRows(data.rows, upTo))} upTo={upTo} />}
           <PlanProgress totals={sumRows(planRows(data.rows, today))} week={nowWeek} upTo={latest} />
           <section className="metric-card"><h2 className="list-heading">Semana a semana</h2>{[...weeks].reverse().map(w => <WeekRow key={w.n} w={w} />)}</section>
           <section className="metric-card span-2"><h2 className="list-heading">Dia a dia <span className="heading-note">{historyDays.length} dias com números</span></h2>{historyDays.length ? historyDays.map(key => {
@@ -156,7 +148,7 @@ function Dashboard() {
           <AreaMap />
         </>}
       </div>
-      <footer className="update-footer"><span className="live-dot" /><span>Atualizado todo dia às 13:00 e às 22:00{latest ? ` · último número: ${shortDate(latest)}` : ''}</span><Button variant="ghost" size="icon" className={`refresh-button ${isFetching ? 'refreshing' : ''}`} title="Atualizar números" aria-label="Atualizar números" disabled={isFetching} onClick={() => void refetch()}><RefreshCw /></Button></footer>
+      <footer className="update-footer"><span className="live-dot" /><span>Atualiza às 13h e às 22h</span><Button variant="ghost" size="icon" className={`refresh-button ${isFetching ? 'refreshing' : ''}`} title="Atualizar números" aria-label="Atualizar números" disabled={isFetching} onClick={() => void refetch()}><RefreshCw /></Button></footer>
     </main>
     <nav className="bottom-nav" aria-label="Navegação principal"><div className="nav-inner">{([{ key: 'hoje', label: 'Resumo', icon: ChartNoAxesCombined }, { key: 'historico', label: 'Histórico', icon: History }, { key: 'anuncios', label: 'Anúncios', icon: Megaphone }] as const).map(item => <Button key={item.key} variant="ghost" className={`nav-item ${aba === item.key ? 'active' : ''}`} aria-current={aba === item.key ? 'page' : undefined} onClick={() => void navigate({ search: { aba: item.key } })}><span className="nav-icon"><item.icon /></span>{item.label}</Button>)}</div></nav>
   </>;
