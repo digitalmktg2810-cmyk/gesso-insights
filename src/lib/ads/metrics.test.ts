@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { latestDay, weekSummaries, CAMPAIGN_START, campaignWeek, currency, makeExample, parseCSV, parseSheet, planWeek, plural, previousWeekRows, REFRESH_INTERVAL, sumRows, WEEKLY_TARGET, weekRows, weekStart } from './metrics';
+import { latestDay, weekSummaries, CAMPAIGN_START, campaignWeek, currency, makeExample, parseCSV, parseSheet, planWeek, plural, previousWeekRows, REFRESH_INTERVAL, sumRows, weekBudget, WEEKLY_TARGET, weekRows, weekStart } from './metrics';
 
 describe('Regras do painel', () => {
   it('fixa a meta semanal em R$ 125,00', () => expect(WEEKLY_TARGET).toBe(125));
+  it('usa R$ 150 a partir da semana 3', () => { expect(weekBudget(2)).toBe(125); expect(weekBudget(3)).toBe(150); expect(weekBudget(8)).toBe(150); });
   it('atualiza a cada cinco minutos', () => expect(REFRESH_INTERVAL).toBe(300000));
   it('formata reais com vírgula', () => expect(currency(87.5).replace(/\s/g, ' ')).toBe('R$ 87,50'));
   it('lê CSV brasileiro com valores decimais e campanha entre aspas', () => {

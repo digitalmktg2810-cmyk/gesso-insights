@@ -104,7 +104,7 @@ export function AreaMap() {
             ref={ref}
             className="area-map"
             role="img"
-            aria-label="Áreas dos anúncios: Leme e Porto Ferreira em foco, Pirassununga reduzida"
+            aria-label="Áreas dos anúncios: 24 km em volta de Pirassununga, incluindo Leme e Porto Ferreira"
           />
         )}
         <div className="area-legend">
@@ -117,7 +117,7 @@ export function AreaMap() {
               {META_AREAS.map((a) => (
                 <li key={a.city.name}>
                   <MapPin size={14} />
-                  {a.city.name} ({a.radiusKm ? `${a.radiusKm} km` : "cidade"}{a.focus === "reduzido" ? ", verba menor" : ""})
+                  {a.city.name} ({a.radiusKm ? `${a.radiusKm} km, pega Leme e Porto Ferreira` : "cidade"}{a.focus === "reduzido" ? ", verba menor" : ""})
                 </li>
               ))}
             </ul>

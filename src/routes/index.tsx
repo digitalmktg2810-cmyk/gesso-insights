@@ -4,7 +4,7 @@ import { ArrowDownRight, ArrowUpRight, CalendarDays, ChartNoAxesCombined, Clock,
 import { Button } from '@/components/ui/button';
 import { AreaMap } from '@/components/ads/area-map';
 import { adsQueryOptions } from '@/lib/ads/data';
-import { campaignWeek, currency, dateKey, integer, latestDay, PLAN_TOTAL, PLAN_WEEKS, planRows, planWeek, plural, previousWeekRows, shiftDay, sumRows, WEEKLY_TARGET, weekRows, weekStart, weekSummaries, type AdRow, type Totals, type WeekSummary } from '@/lib/ads/metrics';
+import { campaignWeek, currency, dateKey, integer, latestDay, PLAN_TOTAL, PLAN_WEEKS, planRows, planWeek, plural, previousWeekRows, shiftDay, sumRows, weekBudget, weekRows, weekStart, weekSummaries, type AdRow, type Totals, type WeekSummary } from '@/lib/ads/metrics';
 
 type View = 'hoje' | 'historico' | 'anuncios';
 export const Route = createFileRoute('/')({
@@ -35,7 +35,7 @@ const shortDate = (key: string) => new Date(`${key}T12:00:00Z`).toLocaleDateStri
 const weekday = (key: string) => new Date(`${key}T12:00:00Z`).toLocaleDateString('pt-BR', { weekday: 'long', timeZone: 'UTC' }).replace(/^./, c => c.toUpperCase());
 const dayLabel = (key: string, today: string) => (key === today ? 'Hoje' : key === shiftDay(today, -1) ? 'Ontem' : weekday(key)) + ` · ${shortDate(key)}`;
 const range = (a: string, b: string) => `${shortDate(a)} a ${shortDate(b)}`;
-const costText = (t: Totals) => (t.custo === null ? (t.gasto > 0 ? 'sem conversas' : '—') : currency(t.custo));
+const costText = (t: Totals) => (t.custo === null ? '—' : currency(t.custo));
 
 function Platform({ origin, rows }: { origin: 'meta' | 'google'; rows: AdRow[] }) {
   const mine = rows.filter(row => row.origem === origin);
@@ -96,7 +96,8 @@ function Dashboard() {
   const todayT = sumRows(todayRows);
   const weeks = weekSummaries(data.rows, today);
   const prevWeek = weeks.length > 1 ? weeks[weeks.length - 2] : undefined;
-  const progress = Math.round(week.gasto / WEEKLY_TARGET * 100);
+  const budget = weekBudget(nowWeek);
+  const progress = Math.round(week.gasto / budget * 100);
   // compara só dias completos: até ontem (ou até o último dia com dados, se for antes)
   const lastInWeek = weekly.reduce<string | null>((m, r) => (m === null || r.data > m ? r.data : m), null);
   const yesterday = shiftDay(today, -1);
@@ -129,8 +130,8 @@ function Dashboard() {
           </section>
           <section className="metric-card simple-card span-2" aria-label="Semana">
             <div className="simple-head"><h2>Semana {nowWeek}</h2><span>{range(weekStart(today), shiftDay(weekStart(today), 6))}</span></div>
-            <div className="simple-budget"><strong>{currency(week.gasto)}</strong><span>de {currency(WEEKLY_TARGET)}</span></div>
-            <progress className="progress-track" value={Math.min(week.gasto, WEEKLY_TARGET)} max={WEEKLY_TARGET} aria-label={`${progress}% do orçamento semanal`} />
+            <div className="simple-budget"><strong>{currency(week.gasto)}</strong><span>de {currency(budget)}</span></div>
+            <progress className="progress-track" value={Math.min(week.gasto, budget)} max={budget} aria-label={`${progress}% do orçamento semanal`} />
             <dl className="simple-stats two"><div><dt>Conversas</dt><dd className="g">{integer(week.conversas)}</dd></div><div><dt>Por conversa</dt><dd>{costText(week)}</dd></div></dl>
           </section>
         </>}

@@ -1,6 +1,11 @@
 import Papa from 'papaparse';
 
 export const WEEKLY_TARGET = 125;
+/** Orçamento de cada semana (Meta + Google). Semanas sem valor usam o último. */
+export const WEEK_BUDGETS = [125, 125, 150];
+export function weekBudget(n: number): number {
+  return WEEK_BUDGETS[Math.min(Math.max(n, 1), WEEK_BUDGETS.length) - 1] ?? WEEKLY_TARGET;
+}
 export const CAMPAIGN_START = '2026-10-15';
 export const REFRESH_INTERVAL = 5 * 60 * 1000;
 export type AdRow = { data: string; origem: 'meta' | 'google'; gasto: number; cliques: number; conversas: number; campanha: string };
@@ -32,7 +37,7 @@ export function sumRows(rows: AdRow[]): Totals {
   return { ...sums, gasto: Math.round(sums.gasto * 100) / 100, custo: sums.conversas ? sums.gasto / sums.conversas : null };
 }
 export const PLAN_WEEKS = 8;
-export const PLAN_TOTAL = WEEKLY_TARGET * PLAN_WEEKS;
+export const PLAN_TOTAL = Array.from({ length: PLAN_WEEKS }, (_, i) => weekBudget(i + 1)).reduce((a, b) => a + b, 0);
 /** Número da semana do plano (1 = 15/10 a 21/10). Pode passar de 8 depois do fim do plano. */
 export function planWeek(today: string) {
   return Math.max(1, Math.floor(dayDiff(CAMPAIGN_START, today) / 7) + 1);
